@@ -174,6 +174,7 @@ def train() -> None:
     episode_return = 0.0
     episode_length = 0
     results = []
+    evaluations = []
 
     while global_step < hyperparams["total_timesteps"]:
         epsilon = epsilon_fn(global_step)
@@ -262,6 +263,7 @@ def train() -> None:
                 f"[evaluation] step={global_step} mean_return={metrics['mean_return']:.2f} std_return={metrics['std_return']:.2f}",
                 flush=True,
             )
+            evaluations.append({"step": global_step, **metrics})
 
     env.close()
 
@@ -277,8 +279,13 @@ def train() -> None:
         "steps": global_step,
     }
     save_checkpoint({"model_state_dict": policy.state_dict(), "metadata": metadata}, checkpoint_path)
+    with open(run_dir / "metadata.json", "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
     with open(run_dir / "training_metrics.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
+    if evaluations:
+        with open(run_dir / "evaluation_metrics.json", "w", encoding="utf-8") as f:
+            json.dump(evaluations, f, indent=2)
     print(f"Saved checkpoint to {checkpoint_path}")
 
 
