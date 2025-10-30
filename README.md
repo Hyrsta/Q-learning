@@ -22,7 +22,15 @@ The Atari environments are automatically wrapped with standard preprocessing (gr
 ## Setup
 
 1. **Create and activate a Python environment** (Python 3.9+ recommended).
-2. **Install dependencies**:
+```bash
+conda create -n qlearning python=3.11
+```
+2. **Install Torch**:
+```bash
+pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu118
+```
+
+2. **Install other dependencies**:
 
    ```bash
    pip install -r requirements.txt
@@ -42,6 +50,7 @@ Train a vanilla DQN agent on CartPole:
 
 ```bash
 python -m src.dqn_experiments.train --env-id CartPole-v1 --algo dqn
+python -m src.dqn_experiments.train --env-id CartPole-v1 --algo double_dqn
 ```
 
 Train a Double DQN agent on LunarLander with a custom random seed:
