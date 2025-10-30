@@ -15,8 +15,8 @@ import torch
 ALGORITHM_ORDER = ("dqn", "double_dqn", "dueling_dqn")
 ALGORITHM_LABELS = {
     "dqn": "DQN",
-    "double_dqn": "Double DQN",
-    "dueling_dqn": "Dueling DQN",
+    "double_dqn": "Double-DQN",
+    "dueling_dqn": "Dueling-DQN",
 }
 ALGORITHM_COLORS = {
     "dqn": "#1f77b4",
@@ -158,25 +158,104 @@ def group_runs(runs: Iterable[RunRecord]) -> Dict[str, Dict[str, List[RunRecord]
     return grouped
 
 
+def _extract_episode_series(run: RunRecord) -> Optional[tuple[np.ndarray, np.ndarray]]:
+    cumulative_steps: List[float] = []
+    returns: List[float] = []
+    total_steps = 0.0
+    for entry in run.training_metrics:
+        length_value: Optional[float] = None
+        for key in ("l", "length", "episode_length", "steps"):
+            if key in entry:
+                try:
+                    length_value = float(entry[key])
+                except (TypeError, ValueError):
+                    length_value = None
+                break
+        if length_value is None or length_value <= 0:
+            continue
+        return_value: Optional[float] = None
+        for key in ("r", "return", "episode_return", "reward"):
+            if key in entry:
+                try:
+                    return_value = float(entry[key])
+                except (TypeError, ValueError):
+                    return_value = None
+                break
+        if return_value is None or np.isnan(return_value):
+            continue
+        total_steps += length_value
+        cumulative_steps.append(total_steps)
+        returns.append(return_value)
+    if not cumulative_steps:
+        return None
+    steps_array = np.asarray(cumulative_steps, dtype=float)
+    returns_array = np.asarray(returns, dtype=float)
+    if steps_array[0] > 0:
+        steps_array = np.insert(steps_array, 0, 0.0)
+        returns_array = np.insert(returns_array, 0, returns_array[0])
+    return steps_array, returns_array
+
+
+def _extract_evaluation_series(run: RunRecord) -> Optional[tuple[np.ndarray, np.ndarray]]:
+    if not run.evaluations:
+        return None
+    filtered = [entry for entry in run.evaluations if "step" in entry and "mean_return" in entry]
+    if not filtered:
+        return None
+    filtered.sort(key=lambda item: float(item["step"]))
+    steps = np.asarray([float(entry["step"]) for entry in filtered], dtype=float)
+    values = np.asarray([float(entry.get("mean_return", np.nan)) for entry in filtered], dtype=float)
+    mask = ~np.isnan(values)
+    steps = steps[mask]
+    values = values[mask]
+    if steps.size == 0:
+        return None
+    if steps[0] > 0:
+        steps = np.insert(steps, 0, 0.0)
+        values = np.insert(values, 0, values[0])
+    return steps, values
+
+
 def aggregate_learning_curve(runs: List[RunRecord]) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray]]:
     if not runs:
         return None
-    steps = sorted({int(entry["step"]) for run in runs for entry in run.evaluations if "step" in entry})
-    if not steps:
+    series: List[tuple[np.ndarray, np.ndarray]] = []
+    for run in runs:
+        data = _extract_episode_series(run)
+        if data is None:
+            data = _extract_evaluation_series(run)
+        if data is None:
+            continue
+        series.append(data)
+    if not series:
         return None
-    values = np.full((len(runs), len(steps)), np.nan, dtype=float)
-    for row, run in enumerate(runs):
-        eval_map = {int(entry["step"]): float(entry.get("mean_return", np.nan)) for entry in run.evaluations if "step" in entry}
-        for col, step in enumerate(steps):
-            if step in eval_map:
-                values[row, col] = eval_map[step]
+    step_grid = sorted({float(step) for steps, _ in series for step in steps})
+    if not step_grid:
+        return None
+    grid_array = np.asarray(step_grid, dtype=float)
+    values = np.full((len(series), len(grid_array)), np.nan, dtype=float)
+    for row, (steps, returns) in enumerate(series):
+        if steps.size == 0:
+            continue
+        order = np.argsort(steps)
+        steps = steps[order]
+        returns = returns[order]
+        steps, unique_indices = np.unique(steps, return_index=True)
+        returns = returns[unique_indices]
+        if steps.size == 1:
+            interp = np.full_like(grid_array, np.nan, dtype=float)
+            interp[grid_array <= steps[0]] = returns[0]
+        else:
+            interp = np.interp(grid_array, steps, returns)
+            interp[grid_array > steps[-1]] = np.nan
+        values[row] = interp
     mean = np.nanmean(values, axis=0)
     std = np.nanstd(values, axis=0)
     counts = np.sum(~np.isnan(values), axis=0)
     ci = np.zeros_like(mean)
     valid = counts > 1
     ci[valid] = 1.96 * std[valid] / np.sqrt(counts[valid])
-    return np.asarray(steps, dtype=float), mean, ci
+    return grid_array, mean, ci
 
 
 def steps_to_target(run: RunRecord, target: float) -> float:
@@ -213,12 +292,20 @@ def plot_learning_curves(grouped_runs: Dict[str, Dict[str, List[RunRecord]]], ou
                 continue
             steps, mean, ci = aggregate
             color = ALGORITHM_COLORS.get(algo, None)
-            ax.plot(steps, mean, label=ALGORITHM_LABELS.get(algo, algo), color=color)
+            ax.plot(steps, mean, label=ALGORITHM_LABELS.get(algo, algo), color=color, linewidth=2.0)
             if np.any(ci > 0):
-                ax.fill_between(steps, mean - ci, mean + ci, alpha=0.2, color=color)
+                ax.fill_between(
+                    steps,
+                    mean - ci,
+                    mean + ci,
+                    alpha=0.12,
+                    color=color,
+                    linewidth=0,
+                )
         ax.set_title(ENV_DISPLAY_NAMES.get(env_id, env_id))
         ax.set_xlabel("Environment steps")
         ax.set_ylabel("Evaluation return")
+        ax.set_xlim(left=0)
         ax.grid(True, alpha=0.3)
         if idx == 0:
             handles, labels = ax.get_legend_handles_labels()
@@ -296,7 +383,7 @@ def plot_stability(grouped_runs: Dict[str, Dict[str, List[RunRecord]]], output_d
         if data:
             box = ax.boxplot(
                 data,
-                labels=labels,
+                tick_labels=labels,
                 patch_artist=True,
                 showmeans=True,
                 meanline=True,
