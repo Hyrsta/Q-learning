@@ -64,7 +64,7 @@ Train the dueling variant on Breakout (this uses the default 10M environment ste
 python -m src.dqn_experiments.train --env-id BreakoutNoFrameskip-v4 --algo dueling_dqn --device cuda
 ```
 
-Outputs are written to `runs/<env-id>/<algo>/` and include the PyTorch checkpoint (`model.pt`) and raw episode statistics captured during training.
+Outputs are written to `runs/<env-id>/<algo>/` and include the PyTorch checkpoint (`model.pt`), metadata about the run, raw episode statistics, and (when periodic evaluation is enabled) aggregated evaluation results for each checkpointed step.
 
 ### Useful CLI options
 
@@ -96,3 +96,19 @@ The evaluator verifies that the supplied `--algo` matches the saved metadata and
 * Extend `ATARI_ENVS` in `src/dqn_experiments/envs.py` to add more Atari tasks that share the same preprocessing pipeline.
 
 Happy experimenting!
+
+## Visualising training progress
+
+The plotting utility at `src/dqn_experiments/plotting.py` summarises multiple runs into the three report-ready figures described in the brief:
+
+```bash
+python -m src.dqn_experiments.plotting --runs-dir runs --output-dir figures
+```
+
+The script looks for experiment folders that contain `training_metrics.json`, `evaluation_metrics.json`, and the saved metadata. It then emits three PNG files:
+
+1. `learning_curves.png` – evaluation return versus environment steps for each environment (mean ± 95% CI over seeds).
+2. `sample_efficiency.png` – grouped bar chart of the average number of environment steps needed to reach the default target score per algorithm.
+3. `stability.png` – box plots of the final evaluation returns for every algorithm/environment combination.
+
+Use `--target-score ENV=VALUE` to override the default thresholds that drive the sample-efficiency figure, and `--show` to display the figures interactively after saving.
