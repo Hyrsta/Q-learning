@@ -1,0 +1,6 @@
+numpy
+torch
+matplotlib
+gymnasium[atari,accept-rom-license]==0.29.1
+ale-py==0.8.1
+opencv-python
