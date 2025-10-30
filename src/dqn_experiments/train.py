@@ -19,6 +19,17 @@ from .utils import save_checkpoint, set_seed
 ALGORITHMS = {"dqn", "double_dqn", "dueling_dqn"}
 
 
+def _to_serializable(value: Any) -> Any:
+    if isinstance(value, (np.ndarray, np.generic)):
+        array_value = np.asarray(value)
+        if array_value.shape == ():
+            return array_value.item()
+        if array_value.size == 1:
+            return array_value.reshape(()).item()
+        return array_value.tolist()
+    return value
+
+
 def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
     if env_id == "CartPole-v1":
         return dict(
@@ -194,9 +205,19 @@ def train() -> None:
 
         if done:
             if "episode" in info:
-                results.append(info["episode"])
+                episode_info = info["episode"]
+
+                episode_return_logged = float(_to_serializable(episode_info.get("r", episode_return)))
+                episode_length_logged = int(_to_serializable(episode_info.get("l", episode_length)))
+
+                sanitized_episode_info = {
+                    key: _to_serializable(value) for key, value in episode_info.items()
+                }
+                sanitized_episode_info.setdefault("r", episode_return_logged)
+                sanitized_episode_info.setdefault("l", episode_length_logged)
+                results.append(sanitized_episode_info)
                 print(
-                    f"global_step={global_step} episode={episode} return={info['episode']['r']:.2f} length={info['episode']['l']} epsilon={epsilon:.3f}",
+                    f"global_step={global_step} episode={episode} return={float(episode_return_logged):.2f} length={int(episode_length_logged)} epsilon={epsilon:.3f}",
                     flush=True,
                 )
             obs, _ = env.reset()
