@@ -191,6 +191,7 @@ def train() -> None:
 
         next_obs, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
+        terminal = terminated
         episode_return += reward
         episode_length += 1
 
@@ -199,7 +200,7 @@ def train() -> None:
         if len(obs_array.shape) == 3:
             obs_array = np.transpose(obs_array, (2, 0, 1))
             next_obs_array = np.transpose(next_obs_array, (2, 0, 1))
-        buffer.add(obs_array, np.array([action]), reward, next_obs_array, done)
+        buffer.add(obs_array, np.array([action]), reward, next_obs_array, terminal)
 
         obs = next_obs
         global_step += 1
