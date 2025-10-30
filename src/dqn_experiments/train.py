@@ -176,6 +176,15 @@ def train() -> None:
     results = []
     evaluations = []
 
+    if args.eval_frequency:
+        initial_metrics = evaluate(policy, args.env_id, args.seed, args.eval_episodes, device)
+        print(
+            "[evaluation] step=0 mean_return="
+            f"{initial_metrics['mean_return']:.2f} std_return={initial_metrics['std_return']:.2f}",
+            flush=True,
+        )
+        evaluations.append({"step": 0, **initial_metrics})
+
     while global_step < hyperparams["total_timesteps"]:
         epsilon = epsilon_fn(global_step)
         if np.random.rand() < epsilon:
@@ -266,6 +275,16 @@ def train() -> None:
             evaluations.append({"step": global_step, **metrics})
 
     env.close()
+
+    if args.eval_frequency:
+        if not evaluations or evaluations[-1]["step"] != global_step:
+            final_metrics = evaluate(policy, args.env_id, args.seed, args.eval_episodes, device)
+            print(
+                "[evaluation] step="
+                f"{global_step} mean_return={final_metrics['mean_return']:.2f} std_return={final_metrics['std_return']:.2f}",
+                flush=True,
+            )
+            evaluations.append({"step": global_step, **final_metrics})
 
     run_dir = Path(args.save_dir) / args.env_id / args.algo
     run_dir.mkdir(parents=True, exist_ok=True)
