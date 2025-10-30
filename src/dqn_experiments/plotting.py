@@ -15,8 +15,8 @@ import torch
 ALGORITHM_ORDER = ("dqn", "double_dqn", "dueling_dqn")
 ALGORITHM_LABELS = {
     "dqn": "DQN",
-    "double_dqn": "Double DQN",
-    "dueling_dqn": "Dueling DQN",
+    "double_dqn": "Double-DQN",
+    "dueling_dqn": "Dueling-DQN",
 }
 ALGORITHM_COLORS = {
     "dqn": "#1f77b4",
@@ -213,12 +213,20 @@ def plot_learning_curves(grouped_runs: Dict[str, Dict[str, List[RunRecord]]], ou
                 continue
             steps, mean, ci = aggregate
             color = ALGORITHM_COLORS.get(algo, None)
-            ax.plot(steps, mean, label=ALGORITHM_LABELS.get(algo, algo), color=color)
+            ax.plot(steps, mean, label=ALGORITHM_LABELS.get(algo, algo), color=color, linewidth=2.0)
             if np.any(ci > 0):
-                ax.fill_between(steps, mean - ci, mean + ci, alpha=0.2, color=color)
+                ax.fill_between(
+                    steps,
+                    mean - ci,
+                    mean + ci,
+                    alpha=0.12,
+                    color=color,
+                    linewidth=0,
+                )
         ax.set_title(ENV_DISPLAY_NAMES.get(env_id, env_id))
         ax.set_xlabel("Environment steps")
         ax.set_ylabel("Evaluation return")
+        ax.set_xlim(left=0)
         ax.grid(True, alpha=0.3)
         if idx == 0:
             handles, labels = ax.get_legend_handles_labels()
