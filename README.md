@@ -49,8 +49,7 @@ The training script lives at `src/dqn_experiments/train.py`. It exposes CLI flag
 Train a vanilla DQN agent on CartPole:
 
 ```bash
-python -m src.dqn_experiments.train --env-id CartPole-v1 --algo dqn
-python -m src.dqn_experiments.train --env-id CartPole-v1 --algo double_dqn
+python -m src.dqn_experiments.train --env-id CartPole-v1 --algo dqn # double_dqn / dueling_dqn
 ```
 
 Train a Double DQN agent on LunarLander with a custom random seed:
