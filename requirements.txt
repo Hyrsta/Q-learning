@@ -1,5 +1,6 @@
 numpy
 matplotlib
 gymnasium[atari,accept-rom-license]==0.29.1
+gymnasium[box2d]
 ale-py==0.8.1
 opencv-python
