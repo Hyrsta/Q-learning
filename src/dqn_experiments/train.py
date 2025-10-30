@@ -104,7 +104,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--save-dir", type=str, default="runs")
-    parser.add_argument("--eval-frequency", type=int, default=100_000)
+    parser.add_argument("--eval-frequency", type=int, default=100)
     parser.add_argument("--eval-episodes", type=int, default=5)
     return parser.parse_args()
 

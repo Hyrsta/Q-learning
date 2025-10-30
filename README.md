@@ -13,7 +13,7 @@ All agents share the same replay buffer, epsilon-greedy exploration schedule, an
 ## Supported environments
 
 1. `CartPole-v1`
-2. `LunarLander-v3`
+2. `LunarLander-v2`
 3. `BreakoutNoFrameskip-v4`
 4. `PongNoFrameskip-v4`
 
