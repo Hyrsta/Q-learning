@@ -22,23 +22,25 @@ The Atari environments are automatically wrapped with standard preprocessing (gr
 ## Setup
 
 1. **Create and activate a Python environment** (Python 3.9+ recommended).
-```bash
-conda create -n qlearning python=3.11
-```
+
+    ```bash
+    conda create -n qlearning python=3.11
+    ```
+
 2. **Install Torch**:
-```bash
-pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu118
-```
 
-2. **Install other dependencies**:
+    ```bash
+    pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu118
+    ```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. **Install other dependencies**:
 
-   The requirements rely entirely on open-source libraries: [PyTorch](https://pytorch.org) for deep learning and [Gymnasium](https://gymnasium.farama.org) (with `ale-py`) for the environments.
+    ```bash
+    pip install -r requirements.txt
+    ```
+    The requirements rely entirely on open-source libraries: [PyTorch](https://pytorch.org) for deep learning and [Gymnasium](https://gymnasium.farama.org) (with `ale-py`) for the environments.
 
-3. **Accept the Atari ROM license** on first launch. The `gymnasium[atari,accept-rom-license]` extra handles downloading the free and legal ROMs via `AutoROM`.
+4. **Accept the Atari ROM license** on first launch. The `gymnasium[atari,accept-rom-license]` extra handles downloading the free and legal ROMs via `AutoROM`.
 
 ## Training
 
