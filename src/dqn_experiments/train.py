@@ -85,13 +85,7 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train DQN variants")
     parser.add_argument("--env-id", type=str, required=True, help="Gymnasium environment id")
-    parser.add_argument(
-        "--algo",
-        type=str,
-        choices=sorted(ALGORITHMS),
-        default="dqn",
-        help="Which algorithm variant to train",
-    )
+    parser.add_argument("--algo",type=str,choices=sorted(ALGORITHMS),default="dqn",help="Which algorithm variant to train")
     parser.add_argument("--total-timesteps", type=int, default=None)
     parser.add_argument("--learning-rate", type=float, default=None)
     parser.add_argument("--buffer-size", type=int, default=None)
@@ -110,13 +104,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--save-dir", type=str, default="runs")
     parser.add_argument("--eval-frequency", type=int, default=None)
     parser.add_argument("--eval-episodes", type=int, default=5)
-    parser.add_argument(
-        "--loss",
-        type=str,
-        choices={"mse", "huber"},
-        default="huber",
-        help="Loss function to optimize.",
-    )
+    parser.add_argument("--loss",type=str,choices={"mse", "huber"},default="huber",help="Loss function to optimize.")
     return parser.parse_args()
 
 
