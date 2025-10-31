@@ -4,6 +4,9 @@ from pathlib import Path
 from typing import Callable, Optional, Tuple
 
 import gymnasium as gym
+import ale_py
+gym.register_envs(ale_py)
+
 import numpy as np
 from gymnasium.wrappers import (
     RecordEpisodeStatistics,
@@ -33,7 +36,7 @@ def make_env(
     video_trigger: Optional[Callable[[int], bool]] = None,
     video_prefix: str = "rl-video",
 ) -> gym.Env:
-    env = gym.make(env_id, render_mode=render_mode)
+    env = gym.make(f"env_id", render_mode=render_mode)
     env.action_space.seed(seed)
 
     env_spec_id = env.spec.id if env.spec is not None else env_id
