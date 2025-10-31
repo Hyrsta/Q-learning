@@ -18,7 +18,12 @@ except ImportError:  # Gymnasium >= 1.0
 from gymnasium.wrappers.atari_preprocessing import AtariPreprocessing
 
 
-ATARI_ENVS = {"BreakoutNoFrameskip-v4", "PongNoFrameskip-v4"}
+ATARI_ENVS = {
+    "Breakout-v5",
+    "Pong-v5",
+    "ALE/Breakout-v5",
+    "ALE/Pong-v5",
+}
 
 
 def make_env(
@@ -34,7 +39,9 @@ def make_env(
     env = gym.make(env_id, render_mode=render_mode)
     env.action_space.seed(seed)
 
-    if env_id in ATARI_ENVS:
+    env_spec_id = env.spec.id if env.spec is not None else env_id
+
+    if env_id in ATARI_ENVS or env_spec_id in ATARI_ENVS:
         env = AtariPreprocessing(env, grayscale_obs=True, frame_skip=4, screen_size=84, scale_obs=False)
         env = TransformObservation(env, lambda obs: np.array(obs, dtype=np.float32) / 255.0)
         env = FrameStack(env, frame_stack)

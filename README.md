@@ -14,8 +14,8 @@ All agents share the same replay buffer, epsilon-greedy exploration schedule, an
 
 1. `CartPole-v1`
 2. `LunarLander-v3`
-3. `BreakoutNoFrameskip-v4`
-4. `PongNoFrameskip-v4`
+3. `Breakout-v5`
+4. `Pong-v5`
 
 The Atari environments are automatically wrapped with standard preprocessing (grayscale, down-sampling to 84×84, frame stacking) to match the original DQN papers.
 
@@ -63,7 +63,7 @@ python -m src.dqn_experiments.train --env-id LunarLander-v3 --algo double_dqn --
 Train the dueling variant on Breakout (this uses the default 10M environment steps, so expect a long run):
 
 ```bash
-python -m src.dqn_experiments.train --env-id BreakoutNoFrameskip-v4 --algo dueling_dqn --device cuda
+python -m src.dqn_experiments.train --env-id Breakout-v5 --algo dueling_dqn --device cuda
 ```
 
 Outputs are written to `runs/<env-id>/<algo>/` and include the PyTorch checkpoint (`model.pt`), metadata about the run, raw episode statistics, and (when periodic evaluation is enabled) aggregated evaluation results for each checkpointed step.
@@ -83,9 +83,9 @@ Use `src/dqn_experiments/evaluate.py` to load a saved checkpoint and run evaluat
 
 ```bash
 python -m src.dqn_experiments.evaluate \
-  --env-id BreakoutNoFrameskip-v4 \
+  --env-id Breakout-v5 \
   --algo dueling_dqn \
-  --checkpoint runs/BreakoutNoFrameskip-v4/dueling_dqn/model.pt \
+  --checkpoint runs/Breakout-v5/dueling_dqn/model.pt \
   --episodes 20
 ```
 

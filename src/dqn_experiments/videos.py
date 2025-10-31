@@ -24,8 +24,8 @@ ALGORITHM_LABELS: Dict[str, str] = {
 ENVIRONMENT_IDS: Dict[str, str] = {
     "CartPole": "CartPole-v1",
     "LunarLander": "LunarLander-v3",
-    "BreakoutNoFrameskip": "BreakoutNoFrameskip-v4",
-    "PongNoFrameskip": "PongNoFrameskip-v4",
+    "Breakout": "Breakout-v5",
+    "Pong": "Pong-v5",
 }
 
 
