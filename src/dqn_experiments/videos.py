@@ -21,11 +21,11 @@ ALGORITHM_LABELS: Dict[str, str] = {
     "dueling_dqn": "Dueling-DQN",
 }
 
-ENVIRONMENT_CANDIDATES: Dict[str, Sequence[str]] = {
-    "CartPole": ("CartPole-v1",),
-    "LunarLander": ("LunarLander-v3", "LunarLander-v2"),
-    "BreakoutNoFrameskip": ("BreakoutNoFrameskip-v4",),
-    "PongNoFrameskip": ("PongNoFrameskip-v4",),
+ENVIRONMENT_IDS: Dict[str, str] = {
+    "CartPole": "CartPole-v1",
+    "LunarLander": "LunarLander-v3",
+    "BreakoutNoFrameskip": "BreakoutNoFrameskip-v4",
+    "PongNoFrameskip": "PongNoFrameskip-v4",
 }
 
 
@@ -47,7 +47,7 @@ def parse_args() -> argparse.Namespace:
         "--env",
         dest="envs",
         action="append",
-        choices=sorted(ENVIRONMENT_CANDIDATES.keys()),
+        choices=sorted(ENVIRONMENT_IDS.keys()),
         help="Restrict video generation to the specified environment(s)",
     )
     parser.add_argument(
@@ -70,26 +70,14 @@ def parse_args() -> argparse.Namespace:
 
 def discover_tasks(args: argparse.Namespace) -> List[VideoTask]:
     tasks: List[VideoTask] = []
-    selected_envs: Iterable[str] = args.envs if args.envs else ENVIRONMENT_CANDIDATES.keys()
+    selected_envs: Iterable[str] = args.envs if args.envs else ENVIRONMENT_IDS.keys()
     selected_algorithms: Iterable[str] = (
         args.algorithms if args.algorithms else ALGORITHMS
     )
 
     for env_display in selected_envs:
-        candidates = ENVIRONMENT_CANDIDATES[env_display]
-        env_id: str | None = None
-        env_root: Path | None = None
-        for candidate in candidates:
-            candidate_dir = args.runs_dir / candidate
-            if candidate_dir.exists():
-                env_id = candidate
-                env_root = candidate_dir
-                break
-        if env_id is None:
-            # Fall back to the first candidate even if the directory is missing so we
-            # can still emit a helpful warning for each algorithm below.
-            env_id = candidates[0]
-            env_root = args.runs_dir / env_id
+        env_id = ENVIRONMENT_IDS[env_display]
+        env_root = args.runs_dir / env_id
 
         for algo in selected_algorithms:
             checkpoint_path = env_root / algo / "model.pt"

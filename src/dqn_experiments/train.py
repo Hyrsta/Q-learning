@@ -47,7 +47,7 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             exploration_initial_eps=1.0,
             exploration_final_eps=0.05,
         )
-    if env_id == "LunarLander-v2":
+    if env_id == "LunarLander-v3":
         return dict(
             total_timesteps=500_000,
             learning_rate=5e-4,

@@ -5,9 +5,9 @@ cmds = [
     ("cartpole_dqn",         ["python","-m","src.dqn_experiments.train","--env-id","CartPole-v1","--algo","dqn"]),
     ("cartpole_double_dqn",  ["python","-m","src.dqn_experiments.train","--env-id","CartPole-v1","--algo","double_dqn"]),
     ("cartpole_dueling_dqn", ["python","-m","src.dqn_experiments.train","--env-id","CartPole-v1","--algo","dueling_dqn"]),
-    # ("LunarLander_dqn",         ["python","-m","src.dqn_experiments.train","--env-id","LunarLander-v2","--algo","dqn"]),
-    # ("LunarLander_double_dqn",  ["python","-m","src.dqn_experiments.train","--env-id","LunarLander-v2","--algo","double_dqn"]),
-    # ("LunarLander_dueling_dqn", ["python","-m","src.dqn_experiments.train","--env-id","LunarLander-v2","--algo","dueling_dqn"]),
+    # ("LunarLander_dqn",         ["python","-m","src.dqn_experiments.train","--env-id","LunarLander-v3","--algo","dqn"]),
+    # ("LunarLander_double_dqn",  ["python","-m","src.dqn_experiments.train","--env-id","LunarLander-v3","--algo","double_dqn"]),
+    # ("LunarLander_dueling_dqn", ["python","-m","src.dqn_experiments.train","--env-id","LunarLander-v3","--algo","dueling_dqn"]),
 ]
 
 logdir = pathlib.Path("logs") / time.strftime("%Y%m%d_%H%M%S")
