@@ -13,7 +13,7 @@ from .buffers import ReplayBuffer
 from .envs import extract_observation_shape, make_env
 from .networks import build_network
 from .schedules import linear_schedule
-from .utils import save_checkpoint, set_seed
+from .utils import polyak_update, save_checkpoint, set_seed
 
 
 ALGORITHMS = {"dqn", "double_dqn", "dueling_dqn"}
@@ -41,6 +41,7 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             train_frequency=1,
             gradient_steps=1,
             target_update_interval=1_000,
+            target_update_tau=1.0,
             learning_starts=1_000,
             exploration_fraction=0.2,
             exploration_initial_eps=1.0,
@@ -56,6 +57,7 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             train_frequency=4,
             gradient_steps=1,
             target_update_interval=4_000,
+            target_update_tau=1.0,
             learning_starts=10_000,
             exploration_fraction=0.4,
             exploration_initial_eps=1.0,
@@ -71,6 +73,7 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             train_frequency=4,
             gradient_steps=1,
             target_update_interval=10_000,
+            target_update_tau=1.0,
             learning_starts=50_000,
             exploration_fraction=0.1,
             exploration_initial_eps=1.0,
@@ -97,6 +100,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-frequency", type=int, default=None)
     parser.add_argument("--gradient-steps", type=int, default=None)
     parser.add_argument("--target-update-interval", type=int, default=None)
+    parser.add_argument("--target-update-tau", type=float, default=None)
     parser.add_argument("--learning-starts", type=int, default=None)
     parser.add_argument("--exploration-fraction", type=float, default=None)
     parser.add_argument("--exploration-initial-eps", type=float, default=None)
@@ -288,7 +292,7 @@ def train() -> None:
                 optimizer.step()
 
         if global_step % hyperparams["target_update_interval"] == 0:
-            target_policy.load_state_dict(policy.state_dict())
+            polyak_update(policy, target_policy, hyperparams["target_update_tau"])
 
         if args.eval_frequency and global_step % args.eval_frequency == 0:
             metrics = evaluate(policy, args.env_id, args.seed, args.eval_episodes, device)
