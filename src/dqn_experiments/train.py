@@ -63,7 +63,7 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             exploration_initial_eps=1.0,
             exploration_final_eps=0.02,
         )
-    if env_id in {"BreakoutNoFrameskip-v4", "PongNoFrameskip-v4"}:
+    if env_id in {"Breakout-v5", "Pong-v5"}:
         return dict(
             total_timesteps=10_000_000,
             learning_rate=1e-4,
