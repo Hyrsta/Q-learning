@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable, Optional, Tuple
 
 import gymnasium as gym
+from gymnasium import error as gym_error
 import numpy as np
 from gymnasium.wrappers import (
     RecordEpisodeStatistics,
@@ -33,7 +34,23 @@ def make_env(
     video_trigger: Optional[Callable[[int], bool]] = None,
     video_prefix: str = "rl-video",
 ) -> gym.Env:
-    env = gym.make(env_id, render_mode=render_mode)
+    try:
+        env = gym.make(env_id, render_mode=render_mode)
+    except gym_error.NameNotFound as original_error:
+        fallback_env_id = None
+        if not env_id.startswith("ALE/"):
+            fallback_env_id = f"ALE/{env_id}"
+
+        if fallback_env_id is None:
+            raise
+
+        try:
+            env = gym.make(fallback_env_id, render_mode=render_mode)
+        except gym_error.NameNotFound:
+            raise original_error
+        else:
+            env_id = fallback_env_id
+
     env.action_space.seed(seed)
 
     env_spec_id = env.spec.id if env.spec is not None else env_id
