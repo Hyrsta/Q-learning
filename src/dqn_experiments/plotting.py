@@ -221,9 +221,9 @@ def aggregate_learning_curve(runs: List[RunRecord]) -> Optional[tuple[np.ndarray
         return None
     series: List[tuple[np.ndarray, np.ndarray]] = []
     for run in runs:
-        data = _extract_episode_series(run)
+        data = _extract_evaluation_series(run)
         if data is None:
-            data = _extract_evaluation_series(run)
+            data = _extract_episode_series(run)
         if data is None:
             continue
         series.append(data)

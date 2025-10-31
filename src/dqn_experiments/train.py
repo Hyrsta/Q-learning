@@ -104,7 +104,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--save-dir", type=str, default="runs")
-    parser.add_argument("--eval-frequency", type=int, default=100)
+    parser.add_argument("--eval-frequency", type=int, default=None)
     parser.add_argument("--eval-episodes", type=int, default=5)
     return parser.parse_args()
 
@@ -144,6 +144,9 @@ def train() -> None:
 
     defaults = get_default_hyperparameters(args.env_id)
     hyperparams = {key: getattr(args, key) if getattr(args, key) is not None else defaults[key] for key in defaults}
+
+    if args.eval_frequency is None:
+        args.eval_frequency = max(1, hyperparams["total_timesteps"] // 100)
 
     device = torch.device(args.device)
     dueling = args.algo == "dueling_dqn"
