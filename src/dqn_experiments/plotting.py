@@ -26,20 +26,20 @@ ALGORITHM_COLORS = {
 
 ENV_PANELS = (
     "CartPole-v1",
-    "LunarLander-v3",
+    "LunarLander-v2",
     "BreakoutNoFrameskip-v4",
     "PongNoFrameskip-v4",
 )
 ENV_DISPLAY_NAMES = {
     "CartPole-v1": "CartPole",
-    "LunarLander-v3": "LunarLander",
+    "LunarLander-v2": "LunarLander",
     "BreakoutNoFrameskip-v4": "Breakout",
     "PongNoFrameskip-v4": "Pong",
 }
 
 DEFAULT_TARGET_SCORES = {
     "CartPole-v1": 475.0,
-    "LunarLander-v3": 200.0,
+    "LunarLander-v2": 200.0,
     "BreakoutNoFrameskip-v4": 400.0,
     "PongNoFrameskip-v4": 18.0,
 }
