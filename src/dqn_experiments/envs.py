@@ -37,8 +37,12 @@ def make_env(
     video_prefix: str = "rl-video",
 ) -> gym.Env:
     make_id = f"{ATARI_PREFIX}{env_id}" if env_id in ATARI_ENVS else env_id
+    make_kwargs = {}
+    if env_id in ATARI_ENVS:
+        make_kwargs["frameskip"] = 1
+
+    env = gym.make(make_id, render_mode=render_mode, **make_kwargs)
     
-    env = gym.make(make_id, render_mode=render_mode)
     env.action_space.seed(seed)
 
     if env_id in ATARI_ENVS:
