@@ -33,8 +33,8 @@ def _to_serializable(value: Any) -> Any:
 def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
     if env_id == "CartPole-v1":
         return dict(
-            total_timesteps=200_000,
-            learning_rate=1e-3,
+            total_timesteps=100_000,
+            learning_rate=5e-4,
             buffer_size=50_000,
             batch_size=64,
             gamma=0.99,
@@ -106,6 +106,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--save-dir", type=str, default="runs")
     parser.add_argument("--eval-frequency", type=int, default=None)
     parser.add_argument("--eval-episodes", type=int, default=5)
+    parser.add_argument(
+        "--loss",
+        type=str,
+        choices={"mse", "huber"},
+        default="huber",
+        help="Loss function to optimize.",
+    )
     return parser.parse_args()
 
 
@@ -157,6 +164,11 @@ def train() -> None:
     target_policy.load_state_dict(policy.state_dict())
 
     optimizer = torch.optim.Adam(policy.parameters(), lr=hyperparams["learning_rate"])
+
+    if args.loss == "huber":
+        loss_fn = F.smooth_l1_loss
+    else:
+        loss_fn = F.mse_loss
 
     buffer = ReplayBuffer(
         capacity=hyperparams["buffer_size"],
@@ -269,7 +281,7 @@ def train() -> None:
                     non_terminal = 1 - terminateds_tensor.unsqueeze(1)
                     target = rewards_tensor.unsqueeze(1) + hyperparams["gamma"] * non_terminal * next_q_values
 
-                loss = F.mse_loss(q_value, target)
+                loss = loss_fn(q_value, target)
                 optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(policy.parameters(), max_norm=10.0)
@@ -303,6 +315,7 @@ def train() -> None:
         "env_id": args.env_id,
         "seed": args.seed,
         "hyperparameters": hyperparams,
+        "loss": args.loss,
         "episodes": episode,
         "steps": global_step,
         "best_evaluation_return": None if best_eval_return == float("-inf") else best_eval_return,
