@@ -52,7 +52,10 @@ class QNetwork(nn.Module):
             x = x.permute(0, 3, 1, 2)
         if not self.is_image:
             x = x.view(x.size(0), -1)
-        return self.head(self.features(x))
+        features = self.features(x)
+        if self.is_image:
+            features = features.view(features.size(0), -1)
+        return self.head(features)
 
 
 class DuelingQNetwork(nn.Module):
@@ -84,6 +87,8 @@ class DuelingQNetwork(nn.Module):
         if not self.is_image:
             x = x.view(x.size(0), -1)
         features = self.features(x)
+        if self.is_image:
+            features = features.view(features.size(0), -1)
         value = self.value_stream(features)
         advantages = self.advantage_stream(features)
         q_values = value + advantages - advantages.mean(dim=1, keepdim=True)
