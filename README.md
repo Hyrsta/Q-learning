@@ -114,3 +114,13 @@ The script looks for experiment folders that contain `training_metrics.json`, `e
 3. `stability.png` – box plots of the final evaluation returns for every algorithm/environment combination.
 
 Use `--target-score ENV=VALUE` to override the default thresholds that drive the sample-efficiency figure, and `--show` to display the figures interactively after saving.
+
+## Qualitative result videos
+
+To generate qualitative rollouts—one per algorithm for each environment—use the video renderer at `src/dqn_experiments/videos.py`:
+
+```bash
+python -m src.dqn_experiments.videos --runs-dir runs --output-dir videos
+```
+
+The script searches for checkpoints in `runs/<env-id>/<algo>/model.pt` and records one evaluation episode per pairing to MP4 files inside the requested `--output-dir`. Use `--env` and `--algo` flags to restrict the subset of environments or algorithms (e.g. `--env CartPole --algo dueling_dqn`).

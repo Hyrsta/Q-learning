@@ -1,24 +1,53 @@
 from __future__ import annotations
 
-from typing import Tuple
+from pathlib import Path
+from typing import Callable, Optional, Tuple
 
 import gymnasium as gym
 import numpy as np
-from gymnasium.wrappers import FrameStack, RecordEpisodeStatistics, TransformObservation
+from gymnasium.wrappers import (
+    FrameStack,
+    RecordEpisodeStatistics,
+    RecordVideo,
+    TransformObservation,
+)
 from gymnasium.wrappers.atari_preprocessing import AtariPreprocessing
 
 
 ATARI_ENVS = {"BreakoutNoFrameskip-v4", "PongNoFrameskip-v4"}
 
 
-def make_env(env_id: str, seed: int, frame_stack: int = 4) -> gym.Env:
-    env = gym.make(env_id)
+def make_env(
+    env_id: str,
+    seed: int,
+    frame_stack: int = 4,
+    *,
+    render_mode: Optional[str] = None,
+    video_dir: Optional[Path | str] = None,
+    video_trigger: Optional[Callable[[int], bool]] = None,
+    video_prefix: str = "rl-video",
+) -> gym.Env:
+    env = gym.make(env_id, render_mode=render_mode)
     env.action_space.seed(seed)
 
     if env_id in ATARI_ENVS:
         env = AtariPreprocessing(env, grayscale_obs=True, frame_skip=4, screen_size=84, scale_obs=False)
         env = TransformObservation(env, lambda obs: np.array(obs, dtype=np.float32) / 255.0)
         env = FrameStack(env, frame_stack)
+
+    if video_dir is not None:
+        if render_mode not in {"rgb_array", "rgb_array_list"}:
+            raise ValueError("Recording video requires render_mode='rgb_array' or 'rgb_array_list'")
+        video_path = Path(video_dir)
+        video_path.mkdir(parents=True, exist_ok=True)
+        trigger = video_trigger if video_trigger is not None else (lambda episode_id: True)
+        env = RecordVideo(
+            env,
+            video_folder=str(video_path),
+            episode_trigger=trigger,
+            name_prefix=video_prefix,
+            disable_logger=True,
+        )
 
     env = RecordEpisodeStatistics(env)
     env.reset(seed=seed)
