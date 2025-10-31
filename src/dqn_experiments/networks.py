@@ -30,9 +30,14 @@ class QNetwork(nn.Module):
     def __init__(self, observation_shape: Tuple[int, ...], num_actions: int) -> None:
         super().__init__()
         self.is_image = len(observation_shape) == 3
+        self.channel_last = False
 
         if self.is_image:
             c, h, w = observation_shape
+            if c > observation_shape[-1]:
+                # Handle environments that expose channel-last observations
+                c, h, w = observation_shape[2], observation_shape[0], observation_shape[1]
+                self.channel_last = True
             self.features = _cnn_block(c)
             with torch.no_grad():
                 n_flatten = self.features(torch.zeros(1, c, h, w)).view(1, -1).size(1)
@@ -43,6 +48,8 @@ class QNetwork(nn.Module):
             self.head = nn.Linear(256, num_actions)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.is_image and self.channel_last:
+            x = x.permute(0, 3, 1, 2)
         if not self.is_image:
             x = x.view(x.size(0), -1)
         return self.head(self.features(x))
@@ -52,9 +59,13 @@ class DuelingQNetwork(nn.Module):
     def __init__(self, observation_shape: Tuple[int, ...], num_actions: int) -> None:
         super().__init__()
         self.is_image = len(observation_shape) == 3
+        self.channel_last = False
 
         if self.is_image:
             c, h, w = observation_shape
+            if c > observation_shape[-1]:
+                c, h, w = observation_shape[2], observation_shape[0], observation_shape[1]
+                self.channel_last = True
             self.features = _cnn_block(c)
             with torch.no_grad():
                 n_flatten = self.features(torch.zeros(1, c, h, w)).view(1, -1).size(1)
@@ -68,6 +79,8 @@ class DuelingQNetwork(nn.Module):
         self.advantage_stream = nn.Sequential(nn.Linear(feature_dim, 512), nn.ReLU(), nn.Linear(512, num_actions))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if self.is_image and self.channel_last:
+            x = x.permute(0, 3, 1, 2)
         if not self.is_image:
             x = x.view(x.size(0), -1)
         features = self.features(x)
