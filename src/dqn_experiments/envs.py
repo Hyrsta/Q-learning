@@ -38,7 +38,17 @@ def make_env(
     if env_id in ATARI_ENVS:
         env = gym.make(f"ALE/{env_id}", render_mode=render_mode, frameskip=1)
         env = AtariPreprocessing(env, grayscale_obs=True, frame_skip=4, screen_size=84, scale_obs=False)
-        env = TransformObservation(env, lambda obs: np.array(obs, dtype=np.float32) / 255.0)
+        obs_space = env.observation_space
+        env = TransformObservation(
+            env,
+            lambda obs: np.array(obs, dtype=np.float32) / 255.0,
+            observation_space=gym.spaces.Box(
+                low=0.0,
+                high=1.0,
+                shape=obs_space.shape,
+                dtype=np.float32,
+            ),
+        )
         env = FrameStack(env, frame_stack)
     else:
         env = gym.make(env_id, render_mode=render_mode)
@@ -67,11 +77,7 @@ def make_env(
 def extract_observation_shape(env: gym.Env) -> Tuple[int, ...]:
     obs_space = env.observation_space
     if isinstance(obs_space, gym.spaces.Box):
-        shape = obs_space.shape
-        if len(shape) == 3:
-            # Convert channel-last to channel-first
-            return (shape[2], shape[0], shape[1])
-        return shape
+        return obs_space.shape
     if isinstance(obs_space, gym.spaces.Discrete):
         return (1,)
     raise ValueError(f"Unsupported observation space: {obs_space}")
