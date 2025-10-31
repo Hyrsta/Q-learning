@@ -11,10 +11,7 @@ from gymnasium.wrappers import (
     TransformObservation,
 )
 
-try:  # Gymnasium < 1.0
-    from gymnasium.wrappers import FrameStack
-except ImportError:  # Gymnasium >= 1.0
-    from gymnasium.wrappers.frame_stack import FrameStack
+from gymnasium.wrappers import FrameStackObservation as FrameStack
 from gymnasium.wrappers.atari_preprocessing import AtariPreprocessing
 
 
