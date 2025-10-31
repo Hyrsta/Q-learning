@@ -1,7 +1,6 @@
 numpy
 matplotlib
-gymnasium[box2d]
+gymnasium[box2d, atari]
 ale-py
-gymnasium[atari,accept-rom-license]
 opencv-python
 moviepy

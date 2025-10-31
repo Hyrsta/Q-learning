@@ -25,6 +25,7 @@ The Atari environments are automatically wrapped with standard preprocessing (gr
 
     ```bash
     conda create -n qlearning python=3.11
+    conda activate qlearning
     ```
 
 2. **Install Torch**:
@@ -38,9 +39,7 @@ The Atari environments are automatically wrapped with standard preprocessing (gr
     ```bash
     pip install -r requirements.txt
     ```
-    The requirements rely entirely on open-source libraries: [PyTorch](https://pytorch.org) for deep learning and [Gymnasium](https://gymnasium.farama.org) (with `ale-py`) for the environments.
-
-4. **Accept the Atari ROM license** on first launch. The `gymnasium[atari,accept-rom-license]` extra handles downloading the free and legal ROMs via `AutoROM`.
+The requirements rely entirely on open-source libraries: [PyTorch](https://pytorch.org) for deep learning and [Gymnasium](https://gymnasium.farama.org) (with `ale-py`) for the environments.
 
 ## Training
 
