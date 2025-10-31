@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 import numpy as np
 import torch
@@ -108,18 +108,46 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _convert_observation(obs: np.ndarray, expected_shape: Tuple[int, ...]) -> np.ndarray:
+    """Return ``obs`` with the same layout as ``expected_shape``.
+
+    Gymnasium's frame stacking wrappers sometimes return channel-first
+    observations (``C, H, W``) while other environments expose channel-last
+    observations (``H, W, C``).  The replay buffer as well as the networks are
+    built using ``extract_observation_shape`` which reads the observation space
+    shape directly from the environment.  When the runtime observation layout
+    already matches the expected shape we simply forward it as-is.  Otherwise we
+    attempt to transpose from channel-last to channel-first.
+    """
+
+    obs_array = np.array(obs, copy=False)
+    if obs_array.shape == expected_shape:
+        return obs_array
+
+    if len(expected_shape) == 3 and obs_array.shape == (
+        expected_shape[1],
+        expected_shape[2],
+        expected_shape[0],
+    ):
+        return np.transpose(obs_array, (2, 0, 1))
+
+    raise ValueError(
+        "Unexpected observation shape: "
+        f"received {obs_array.shape}, expected {expected_shape}"
+    )
+
+
 def evaluate(agent: torch.nn.Module, env_id: str, seed: int, episodes: int, device: torch.device) -> Dict[str, float]:
     env = make_env(env_id, seed=seed + 10_000)
     agent.eval()
     returns = []
+    obs_shape = extract_observation_shape(env)
     for _ in range(episodes):
         obs, _ = env.reset()
         done = False
         total_reward = 0.0
         while not done:
-            obs_array = np.array(obs, copy=False)
-            if len(obs_array.shape) == 3:
-                obs_array = np.transpose(obs_array, (2, 0, 1))
+            obs_array = _convert_observation(obs, obs_shape)
             obs_tensor = torch.tensor(obs_array, dtype=torch.float32, device=device).unsqueeze(0)
             with torch.no_grad():
                 q_values = agent(obs_tensor)
@@ -191,9 +219,7 @@ def train() -> None:
         if np.random.rand() < epsilon:
             action = env.action_space.sample()
         else:
-            obs_array = np.array(obs, copy=False)
-            if len(obs_array.shape) == 3:
-                obs_array = np.transpose(obs_array, (2, 0, 1))
+            obs_array = _convert_observation(obs, obs_shape)
             obs_tensor = torch.tensor(obs_array, dtype=torch.float32, device=device).unsqueeze(0)
             with torch.no_grad():
                 q_values = policy(obs_tensor)
@@ -204,11 +230,8 @@ def train() -> None:
         episode_return += reward
         episode_length += 1
 
-        obs_array = np.array(obs, copy=False)
-        next_obs_array = np.array(next_obs, copy=False)
-        if len(obs_array.shape) == 3:
-            obs_array = np.transpose(obs_array, (2, 0, 1))
-            next_obs_array = np.transpose(next_obs_array, (2, 0, 1))
+        obs_array = _convert_observation(obs, obs_shape)
+        next_obs_array = _convert_observation(next_obs, obs_shape)
         buffer.add(
             obs_array,
             np.array([action]),
