@@ -6,11 +6,15 @@ from typing import Callable, Optional, Tuple
 import gymnasium as gym
 import numpy as np
 from gymnasium.wrappers import (
-    FrameStack,
     RecordEpisodeStatistics,
     RecordVideo,
     TransformObservation,
 )
+
+try:  # Gymnasium < 1.0
+    from gymnasium.wrappers import FrameStack
+except ImportError:  # Gymnasium >= 1.0
+    from gymnasium.wrappers.frame_stack import FrameStack
 from gymnasium.wrappers.atari_preprocessing import AtariPreprocessing
 
 
