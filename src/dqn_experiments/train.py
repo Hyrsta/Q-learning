@@ -179,6 +179,9 @@ def train() -> None:
     results = []
     evaluations = []
 
+    best_eval_return = float("-inf")
+    best_policy_state = None
+
     while global_step < hyperparams["total_timesteps"]:
         epsilon = epsilon_fn(global_step)
         if np.random.rand() < epsilon:
@@ -202,7 +205,14 @@ def train() -> None:
         if len(obs_array.shape) == 3:
             obs_array = np.transpose(obs_array, (2, 0, 1))
             next_obs_array = np.transpose(next_obs_array, (2, 0, 1))
-        buffer.add(obs_array, np.array([action]), reward, next_obs_array, done)
+        buffer.add(
+            obs_array,
+            np.array([action]),
+            reward,
+            next_obs_array,
+            terminated,
+            truncated,
+        )
 
         obs = next_obs
         global_step += 1
@@ -232,13 +242,20 @@ def train() -> None:
         if global_step > hyperparams["learning_starts"] and global_step % hyperparams["train_frequency"] == 0:
             for _ in range(hyperparams["gradient_steps"]):
                 batch = buffer.sample(hyperparams["batch_size"])
-                observations, actions, rewards, next_observations, dones = batch
+                (
+                    observations,
+                    actions,
+                    rewards,
+                    next_observations,
+                    terminateds,
+                    _,
+                ) = batch
 
                 observations_tensor = torch.tensor(observations, dtype=torch.float32, device=device)
                 actions_tensor = torch.tensor(actions, dtype=torch.long, device=device)
                 rewards_tensor = torch.tensor(rewards, dtype=torch.float32, device=device)
                 next_observations_tensor = torch.tensor(next_observations, dtype=torch.float32, device=device)
-                dones_tensor = torch.tensor(dones, dtype=torch.float32, device=device)
+                terminateds_tensor = torch.tensor(terminateds, dtype=torch.float32, device=device)
 
                 q_values = policy(observations_tensor)
                 q_value = q_values.gather(1, actions_tensor)
@@ -249,7 +266,8 @@ def train() -> None:
                         next_q_values = target_policy(next_observations_tensor).gather(1, next_actions)
                     else:
                         next_q_values = target_policy(next_observations_tensor).max(dim=1, keepdim=True)[0]
-                    target = rewards_tensor.unsqueeze(1) + hyperparams["gamma"] * (1 - dones_tensor.unsqueeze(1)) * next_q_values
+                    non_terminal = 1 - terminateds_tensor.unsqueeze(1)
+                    target = rewards_tensor.unsqueeze(1) + hyperparams["gamma"] * non_terminal * next_q_values
 
                 loss = F.mse_loss(q_value, target)
                 optimizer.zero_grad()
@@ -268,7 +286,14 @@ def train() -> None:
             )
             evaluations.append({"step": global_step, **metrics})
 
+            if metrics["mean_return"] > best_eval_return:
+                best_eval_return = metrics["mean_return"]
+                best_policy_state = {key: value.detach().cpu().clone() for key, value in policy.state_dict().items()}
+
     env.close()
+
+    if best_policy_state is not None:
+        policy.load_state_dict(best_policy_state)
 
     run_dir = Path(args.save_dir) / args.env_id / args.algo
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -280,6 +305,7 @@ def train() -> None:
         "hyperparameters": hyperparams,
         "episodes": episode,
         "steps": global_step,
+        "best_evaluation_return": None if best_eval_return == float("-inf") else best_eval_return,
     }
     save_checkpoint({"model_state_dict": policy.state_dict(), "metadata": metadata}, checkpoint_path)
     with open(run_dir / "metadata.json", "w", encoding="utf-8") as f:
