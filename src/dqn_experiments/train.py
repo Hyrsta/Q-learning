@@ -45,8 +45,6 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             exploration_fraction=0.2,
             exploration_initial_eps=1.0,
             exploration_final_eps=0.05,
-            learning_rate_decay_factor=0.5,
-            learning_rate_decay_threshold=475.0,
         )
     if env_id == "LunarLander-v2":
         return dict(
@@ -62,8 +60,6 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             exploration_fraction=0.4,
             exploration_initial_eps=1.0,
             exploration_final_eps=0.02,
-            learning_rate_decay_factor=None,
-            learning_rate_decay_threshold=None,
         )
     if env_id in {"BreakoutNoFrameskip-v4", "PongNoFrameskip-v4"}:
         return dict(
@@ -79,8 +75,6 @@ def get_default_hyperparameters(env_id: str) -> Dict[str, Any]:
             exploration_fraction=0.1,
             exploration_initial_eps=1.0,
             exploration_final_eps=0.01,
-            learning_rate_decay_factor=None,
-            learning_rate_decay_threshold=None,
         )
     raise ValueError(f"Unsupported environment id: {env_id}")
 
@@ -167,10 +161,6 @@ def train() -> None:
         action_shape=(1,),
         device=device.type,
     )
-
-    lr_decay_factor = hyperparams.get("learning_rate_decay_factor")
-    lr_decay_threshold = hyperparams.get("learning_rate_decay_threshold")
-    lr_reduced = False
 
     epsilon_fn = linear_schedule(
         hyperparams["exploration_initial_eps"],
@@ -296,21 +286,6 @@ def train() -> None:
             if metrics["mean_return"] > best_eval_return:
                 best_eval_return = metrics["mean_return"]
                 best_policy_state = {key: value.detach().cpu().clone() for key, value in policy.state_dict().items()}
-
-            if (
-                not lr_reduced
-                and lr_decay_factor is not None
-                and lr_decay_threshold is not None
-                and lr_decay_factor < 1.0
-                and metrics["mean_return"] >= lr_decay_threshold
-            ):
-                for param_group in optimizer.param_groups:
-                    param_group["lr"] *= lr_decay_factor
-                lr_reduced = True
-                print(
-                    f"[lr-schedule] step={global_step} mean_return={metrics['mean_return']:.2f} new_lr={optimizer.param_groups[0]['lr']:.2e}",
-                    flush=True,
-                )
 
     env.close()
 
