@@ -18,8 +18,6 @@ from gymnasium.wrappers import FrameStackObservation as FrameStack
 from gymnasium.wrappers.atari_preprocessing import AtariPreprocessing
 
 
-ATARI_PREFIX = "ALE/"
-
 ATARI_ENVS = {
     "Breakout-v5",
     "Pong-v5",
@@ -38,14 +36,14 @@ def make_env(
 ) -> gym.Env:
     
     if env_id in ATARI_ENVS:
-        env = gym.make(f"{ATARI_PREFIX}{env_id}", render_mode=render_mode, frameskip=1)
-        env.action_space.seed(seed)
+        env = gym.make(f"ALE/{env_id}", render_mode=render_mode, frameskip=1)
         env = AtariPreprocessing(env, grayscale_obs=True, frame_skip=4, screen_size=84, scale_obs=False)
         env = TransformObservation(env, lambda obs: np.array(obs, dtype=np.float32) / 255.0)
         env = FrameStack(env, frame_stack)
     else:
         env = gym.make(env_id, render_mode=render_mode)
-        env.action_space.seed(seed)
+    
+    env.action_space.seed(seed)
 
     if video_dir is not None:
         if render_mode not in {"rgb_array", "rgb_array_list"}:
